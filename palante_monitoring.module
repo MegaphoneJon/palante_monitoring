@@ -1,0 +1,31 @@
+<?php
+
+/**
+ * Implements hook_requirements().
+ */
+function palante_monitoring_requirements($phase) {
+  $requirements = array();
+
+  if ($phase == 'runtime') {
+    $sql = "SELECT wid, timestamp, severity, type, message FROM watchdog WHERE severity = " . WATCHDOG_EMERGENCY . " OR severity = " . WATCHDOG_ALERT . " OR severity = " . WATCHDOG_CRITICAL . ";";
+    $result = db_query($sql);
+    // debug($result, "result");
+    if ($result->rowCount()) {
+      // We found some entries, post a warning.
+      $requirements['palante_monitoring'] = array(
+        'title' => "Watchdog check found " . $result->rowCount() . " troubling entries",
+        'description' => "This Palante Monitoring check triggers when there are watchdog entries of \"alert\", \"emergency\", or \"critical\"",
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+    else {
+      $requirements['palante_monitoring'] = array(
+        'title' => t('Watchdog check'),
+        'description' => "10pm and all is well.",
+        'severity' => REQUIREMENT_OK,
+      );
+    }
+  }
+
+  return $requirements;
+}
