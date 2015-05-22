@@ -46,7 +46,7 @@ if ($phase == 'runtime') {
         'description' => "This Palante Monitoring check triggers when the oldest Watchdog logs are 5 days old or less",
         'severity' => REQUIREMENT_ERROR,
       );
-
+      
     }
 
     // if it's less than a day old
