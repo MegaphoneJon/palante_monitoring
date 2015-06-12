@@ -12,19 +12,65 @@ function palante_monitoring_requirements($phase) {
     // debug($result, "result");
     if ($result->rowCount()) {
       // We found some entries, post a warning.
-      $requirements['palante_monitoring'] = array(
-        'title' => "Watchdog check found " . $result->rowCount() . " troubling entries",
+      $requirements['palante_monitoring_watchdog'] = array(
+        'title' => "Palante Monitoring - Watchdog check",
+        'value' => "Watchdog check found " . $result->rowCount() . " troubling entries",
         'description' => "This Palante Monitoring check triggers when there are watchdog entries of \"alert\", \"emergency\", or \"critical\"",
         'severity' => REQUIREMENT_ERROR,
       );
     }
     else {
-      $requirements['palante_monitoring'] = array(
-        'title' => t('Watchdog check'),
-        'description' => "10pm and all is well.",
+      $requirements['palante_monitoring_watchdog'] = array(
+        'title' => "Palante Monitoring - Watchdog check",
+        'value' => "No alert, emergency, or critical messages found.",
         'severity' => REQUIREMENT_OK,
       );
     }
+  }
+
+if ($phase == 'runtime') {
+    // get the time of the oldest watchdog log entry
+    $result = db_query_range('SELECT timestamp FROM watchdog ORDER BY timestamp',0,1)->fetchField();
+
+    // find the time since that entry
+    $time = "$result";
+    $time_difference = strtotime('now') - $time;
+
+    // put it into days
+    $td_days = (int) ($time_difference / 86400);
+
+    // if it's less than a day old
+    if($td_days < 1) {
+      // post a warning.
+      $requirements['palante_monitoring_oldlog'] = array(
+        'title' => "Palante Monitoring - Oldest Log Check",
+        'value' => "Oldest Watchdog log is less than 1 day old!",
+        'description' => "This Palante Monitoring check triggers when the oldest Watchdog logs are 5 days old or less",
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+
+    // if it's less than or equal to 5 days old 
+    elseif($td_days <= 5) {
+      // post a warning.
+      $requirements['palante_monitoring_oldlog'] = array(
+        'title' => "Palante Monitoring - Oldest Log Check",
+        'value' => "Oldest Watchdog log is only " . $td_days . " days old!",
+        'description' => "This Palante Monitoring check triggers when the oldest Watchdog logs are 5 days old or less",
+        'severity' => REQUIREMENT_ERROR,
+      );  
+    
+    }   
+
+    // else all is well
+    else {
+      $requirements['palante_monitoring_oldlog'] = array(
+        'title' => "Palante Monitoring - Oldest Log Check",
+        'value' => "Oldest Watchdog log is " . $td_days . " days old",
+        'severity' => REQUIREMENT_OK,
+      );
+    }
+
   }
 
   return $requirements;
