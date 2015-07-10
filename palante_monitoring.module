@@ -77,16 +77,36 @@ if ($phase == 'runtime') {
 
   //get backup names and locations
   $result = db_query("SELECT name, location FROM backup_migrate_destinations WHERE `location` REGEXP('daily$') OR `location` REGEXP('weekly$')");
-  
-  #$result->fetchAll();
 
+    // go through each name and location found  
     foreach($result as $item) { 
-          //do something with $field and $val 
+      // name of backup job
       $name = $item->name;
+      // relative path of backup folder
       $location = $item->location;
-    $requirements["palante_monitoring_backuplocation" . $name] = array(
+      // convert relative path to real path
+      $path = drupal_realpath($location);
+
+      // find the most recent file in that path
+      $latest_ctime = 0;
+      $latest_filename = '';
+
+      $d = dir($path);
+      while (false !== ($entry = $d->read())) {
+        $filepath = "{$path}/{$entry}";
+        // is a file, has a creation time, and ends in .msql.gz
+        if (is_file($filepath) && filectime($filepath) && glob('*.mysql.gz$') > $latest_ctime) {
+          $latest_ctime = filectime($filepath);
+          $latest_filename = $entry;
+        }
+      }
+
+      // now $latest_filename contains the filename of the file that changed last
+
+
+      $requirements["palante_monitoring_backuplocation" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",
-        'value' => "This backup lives at " . $location,
+        'value' => "This backup lives at " . $path . ", and the lastest backup is " . $latest_filename,
         'severity' => REQUIREMENT_OK,
       );
   } 
