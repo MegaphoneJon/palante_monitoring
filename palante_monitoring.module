@@ -73,5 +73,24 @@ if ($phase == 'runtime') {
 
   }
 
+if ($phase == 'runtime') {
+
+  //get backup names and locations
+  $result = db_query("SELECT name, location FROM backup_migrate_destinations WHERE `location` REGEXP('daily$') OR `location` REGEXP('weekly$')");
+  
+  #$result->fetchAll();
+
+    foreach($result as $item) { 
+          //do something with $field and $val 
+      $name = $item->name;
+      $location = $item->location;
+    $requirements["palante_monitoring_backuplocation" . $name] = array(
+        'title' => "Palante Monitoring - " . $name . " backup",
+        'value' => "This backup lives at " . $location,
+        'severity' => REQUIREMENT_OK,
+      );
+  } 
+}
+
   return $requirements;
 }
