@@ -75,11 +75,13 @@ if ($phase == 'runtime') {
 
 if ($phase == 'runtime') {
 
-  //get backup names and locations
+  //get backup names and locations from the drupal database
   $result = db_query("SELECT name, location FROM backup_migrate_destinations WHERE `location` REGEXP('daily$') OR `location` REGEXP('weekly$')");
 
-    // go through each name and location found  
+    // go through each name and location found
     foreach($result as $item) { 
+
+      // pull the information from the database and assign to variables
       // name of backup job
       $name = $item->name;
       // relative path of backup folder
@@ -94,8 +96,8 @@ if ($phase == 'runtime') {
       $d = dir($path);
       while (false !== ($entry = $d->read())) {
         $filepath = "{$path}/{$entry}";
-        // is a file, has a creation time, and ends in .msql.gz
-        if (is_file($filepath) && filectime($filepath) && glob('*.mysql.gz$') > $latest_ctime) {
+        // is a file, ends in gz, and the file creation time is more recent than others
+        if (is_file($filepath) && preg_match("/.gz$/", $filepath) && filectime($filepath) > $latest_ctime) {
           $latest_ctime = filectime($filepath);
           $latest_filename = $entry;
         }
@@ -103,12 +105,119 @@ if ($phase == 'runtime') {
 
       // now $latest_filename contains the filename of the file that changed last
 
+      // string that we are looking for in the civi database to verify it ran correctly
+      $civipattern = "CREATE TABLE `civicrm_worldregion`";
 
+      // string that we are looking for in the drupal database to verify it ran correctly
+      $drupalpattern = "CREATE TABLE `watchdog`";
+
+      // declare and empty the contents variable
+      $contents = '';
+
+      // get the full file location
+      $filename = "{$path}/{$latest_filename}";
+
+      // open the file
+      $zd = gzopen($filename, "r");
+
+     // output the file as string to contents
+      while (!gzeof($zd)) {
+        $contents .= gzgets($zd, 4096);
+      }
+
+      // look through contents to see if the civi or drupal strings appear
+      $civifind = strpos($contents, $civipattern);
+      $drupalfind = strpos($contents, $drupalpattern);
+
+      // begin generating results
+
+      if (
+        // if backup name includes Daily and file is older than 25 hours
+        (preg_match("/\bDaily\b/",$name)) && (time()-filemtime("{$path}/{$latest_filename}") > 25 * 3600))
+        {
+
+        // get age of file in hours
+        $age = (int) ((time()-filemtime("{$path}/{$latest_filename}")) / 3600);
+
+        // output
+        $requirements["palante_monitoring_backup" . $name] = array(
+        'title' => "Palante Monitoring - " . $name . " backup",
+        'value' => "The latest " . $name . " backup, " . $latest_filename . ", is " . $age . " hours old!",
+        'severity' => REQUIREMENT_ERROR,
+        ); 
+
+        }
+ 
+      elseif (
+
+        // if backup name includes Weekly and file is older than 8 days
+        (preg_match("/\bWeekly\b/",$name)) && (time()-filemtime("{$path}/{$latest_filename}") > 8 * 24 * 3600))
+        {   
+
+        // get age of file in days
+        $age = (int) ((time()-filemtime("{$path}/{$latest_filename}")) / (24 * 3600));
+
+        // output
+        $requirements["palante_monitoring_backup" . $name] = array(
+        'title' => "Palante Monitoring - " . $name . " backup",   
+        'value' => "The latest " . $name . " backup, " . $latest_filename . ", is " . $age . " days old!",
+        'severity' => REQUIREMENT_ERROR,
+        ); 
+
+        }
+
+      elseif (
+
+        // if backup is a Drupal backup but doesn't contain the desired string
+        (preg_match("/\bdrupal\b/",$path) && $drupalfind === FALSE))
+        {
+
+        // output
+        $requirements["palante_monitoring_backup" . $name] = array(
+        'title' => "Palante Monitoring - " . $name . " backup",
+        'value' => "The latest " . $name . " backup, " . $latest_filename . ", did not run properly! drupalcheck",
+        'severity' => REQUIREMENT_ERROR,
+        );
+        }
+        
+
+      elseif (
+
+        // if backup is a Civi backup but doesn't contain the desired string
+        (preg_match("/\bcivi\b/",$path) && $civifind === FALSE))
+        {
+
+        // output
+        $requirements["palante_monitoring_backup" . $name] = array(
+        'title' => "Palante Monitoring - " . $name . " backup",
+        'value' => "The latest " . $name . " backup, " . $latest_filename . ", did not run properly! civicheck",
+        'severity' => REQUIREMENT_ERROR,
+        );
+        }
+
+      elseif (
+
+        // if backup isn't specifically civi or drupal but doesn't contain either desired string
+        ( $drupalfind === FALSE && $civifind === FALSE ))
+        {
+
+        // output
+        $requirements["palante_monitoring_backup" . $name] = array(
+        'title' => "Palante Monitoring - " . $name . " backup",
+        'value' => "The latest " . $name . " backup, " . $latest_filename . ", did not run properly! allcheck",
+        'severity' => REQUIREMENT_ERROR,
+        );
+        }
+
+      else {
+      // else all is well output
       $requirements["palante_monitoring_backuplocation" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",
         'value' => "This backup lives at " . $path . ", and the lastest backup is " . $latest_filename,
         'severity' => REQUIREMENT_OK,
-      );
+        );
+        }
+        
   } 
 }
 
