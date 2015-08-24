@@ -4,23 +4,20 @@
  * Implements hook_requirements().
  */
 function palante_monitoring_requirements($phase) {
-	if ($phase != 'runtime') {
-		exit;
-	}
+  if ($phase != 'runtime') {
+    exit;
+  }
   $requirements = array();
-
   palante_monitoring_watchdog_severity($requirements);
   palante_monitoring_watchdog_age($requirements);
   palante_monitoring_backups($requirements);
-
-
-  
   return $requirements;
 }
 
+/**
+ * Check for watchdog entries of severity "alert", "critical", or "emergency".
+ */
 function palante_monitoring_watchdog_severity(&$requirements) {
-
-	// Check for watchdog entries of severity "alert", "critical", or "emergency".
   $sql = "SELECT wid, timestamp, severity, type, message FROM watchdog WHERE severity = " . WATCHDOG_EMERGENCY . " OR severity = " . WATCHDOG_ALERT . " OR severity = " . WATCHDOG_CRITICAL . ";";
   $result = db_query($sql);
   // debug($result, "result");
@@ -42,6 +39,9 @@ function palante_monitoring_watchdog_severity(&$requirements) {
   }
 }
 
+/**
+ * Ensure the oldest watchdog entry is at least 5 days old.
+ */
 function palante_monitoring_watchdog_age(&$requirements) {
   // get the time of the oldest watchdog log entry
   $result = db_query_range('SELECT timestamp FROM watchdog ORDER BY timestamp',0,1)->fetchField();
@@ -65,7 +65,7 @@ function palante_monitoring_watchdog_age(&$requirements) {
   }
 
   // if it's less than or equal to 5 days old 
-  if($td_days <= 5) {
+  elseif($td_days <= 5) {
     // post a warning.
     $requirements['palante_monitoring_oldlog'] = array(
       'title' => "Palante Monitoring - Oldest Log Check",
@@ -83,7 +83,6 @@ function palante_monitoring_watchdog_age(&$requirements) {
       'severity' => REQUIREMENT_OK,
     );
   }
-
 }
 
 function palante_monitoring_backups(&$requirements) {
@@ -109,7 +108,7 @@ function palante_monitoring_backups(&$requirements) {
       while (false !== ($entry = $d->read())) {
         $filepath = "{$path}/{$entry}";
         // is a file, ends in gz, and the file creation time is more recent than others
-        if (is_file($filepath) && preg_match("/.gz$/", $filepath) && filectime($filepath) > $latest_ctime) {
+        if (is_file($filepath) && preg_match("/.gz$/", $filepath) && filemtime($filepath) > $latest_ctime) {
           $latest_ctime = filectime($filepath);
           $latest_filename = $entry;
         }
@@ -143,8 +142,8 @@ function palante_monitoring_backups(&$requirements) {
 
       // begin generating results
 
+      // if backup name includes Daily and file is older than 25 hours
       if (
-        // if backup name includes Daily and file is older than 25 hours
         (preg_match("/\bDaily\b/",$name)) && (time()-filemtime("{$path}/{$latest_filename}") > 25 * 3600))
         {
 
