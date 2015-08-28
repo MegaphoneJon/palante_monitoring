@@ -150,7 +150,7 @@ function palante_monitoring_backups(&$requirements) {
         // get age of file in hours
         $age = (int) ((time()-filemtime("{$path}/{$latest_filename}")) / 3600);
 
-        // output
+        // output hours old
         $requirements["palante_monitoring_backup" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",
         'value' => "The latest " . $name . " backup, " . $latest_filename . ", is " . $age . " hours old!",
@@ -168,7 +168,7 @@ function palante_monitoring_backups(&$requirements) {
         // get age of file in days
         $age = (int) ((time()-filemtime("{$path}/{$latest_filename}")) / (24 * 3600));
 
-        // output
+        // output days old
         $requirements["palante_monitoring_backup" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",   
         'value' => "The latest " . $name . " backup, " . $latest_filename . ", is " . $age . " days old!",
@@ -179,43 +179,16 @@ function palante_monitoring_backups(&$requirements) {
 
       elseif (
 
-        // if backup is a Drupal backup but doesn't contain the desired string
-        (preg_match("/\bdrupal\b/",$path) && $drupalfind === FALSE))
-        {
+        // if backup but doesn't contain the desired string
+        (preg_match("/\bdrupal\b/",$path) && $drupalfind === FALSE) OR 
+	(preg_match("/\bcivi\b/",$path) && $civifind === FALSE) OR 
+	( $drupalfind === FALSE && $civifind === FALSE ))
 
-        // output
+        {
+        // output did not run properly
         $requirements["palante_monitoring_backup" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",
-        'value' => "The latest " . $name . " backup, " . $latest_filename . ", did not run properly! drupalcheck",
-        'severity' => REQUIREMENT_ERROR,
-        );
-        }
-        
-
-      elseif (
-
-        // if backup is a Civi backup but doesn't contain the desired string
-        (preg_match("/\bcivi\b/",$path) && $civifind === FALSE))
-        {
-
-        // output
-        $requirements["palante_monitoring_backup" . $name] = array(
-        'title' => "Palante Monitoring - " . $name . " backup",
-        'value' => "The latest " . $name . " backup, " . $latest_filename . ", did not run properly! civicheck",
-        'severity' => REQUIREMENT_ERROR,
-        );
-        }
-
-      elseif (
-
-        // if backup isn't specifically civi or drupal but doesn't contain either desired string
-        ( $drupalfind === FALSE && $civifind === FALSE ))
-        {
-
-        // output
-        $requirements["palante_monitoring_backup" . $name] = array(
-        'title' => "Palante Monitoring - " . $name . " backup",
-        'value' => "The latest " . $name . " backup, " . $latest_filename . ", did not run properly! allcheck",
+        'value' => "The latest " . $name . " backup, " . $latest_filename . ", did not run properly!",
         'severity' => REQUIREMENT_ERROR,
         );
         }
