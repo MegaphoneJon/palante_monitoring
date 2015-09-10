@@ -86,6 +86,11 @@ function palante_monitoring_watchdog_age(&$requirements) {
 }
 
 function palante_monitoring_backups(&$requirements) {
+
+// output date to watchdog
+$outputdate = date("Y/m/d H:i:s"). substr((string)microtime(), 1, 6);
+watchdog('output date 1', "$outputdate");
+
 //get backup names and locations from the drupal database
   $result = db_query("SELECT name, location FROM backup_migrate_destinations WHERE `location` REGEXP('daily$') OR `location` REGEXP('weekly$')");
 
@@ -201,7 +206,10 @@ function palante_monitoring_backups(&$requirements) {
         'severity' => REQUIREMENT_OK,
         );
         }
-        
   } 
+
+// output date to watchdog
+$outputdate = date("Y/m/d H:i:s"). substr((string)microtime(), 1, 6);
+watchdog('output date 2', "$outputdate");
 
 }
