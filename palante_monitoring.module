@@ -18,7 +18,7 @@ function palante_monitoring_requirements($phase) {
  * Check for watchdog entries of severity "alert", "critical", or "emergency".
  */
 function palante_monitoring_watchdog_severity(&$requirements) {
-  $sql = "SELECT wid, timestamp, severity, type, message FROM watchdog WHERE type != 'redmine' AND severity = " . WATCHDOG_EMERGENCY . " OR type != 'redmine' AND severity = " . WATCHDOG_ALERT . " OR type != 'redmine' AND severity = " . WATCHDOG_CRITICAL . ";";
+  $sql = "SELECT wid, timestamp, severity, type, message FROM watchdog WHERE type != 'redmine' AND (severity = " . WATCHDOG_EMERGENCY . " OR severity = " . WATCHDOG_ALERT . " OR severity = " . WATCHDOG_CRITICAL . ");";
   $result = db_query($sql);
   // debug($result, "result");
   if ($result->rowCount()) {
