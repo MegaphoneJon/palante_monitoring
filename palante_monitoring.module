@@ -87,9 +87,9 @@ function palante_monitoring_watchdog_age(&$requirements) {
 
 function palante_monitoring_backups(&$requirements) {
 
-// output date to watchdog
+// output date string to watchdog for performance testing
 $outputdate = date("Y/m/d H:i:s"). substr((string)microtime(), 1, 6);
-watchdog('output date 1', "$outputdate");
+watchdog('backup check started', "$outputdate");
 
 //get backup names and locations from the drupal database
   $result = db_query("SELECT name, location FROM backup_migrate_destinations WHERE `location` REGEXP('daily$') OR `location` REGEXP('weekly$')");
@@ -121,6 +121,47 @@ watchdog('output date 1', "$outputdate");
 
       // now $latest_filename contains the filename of the file that changed last
 
+      // check first the age of the file
+      // check if backup name includes Daily and file is older than 25 hours
+      if (
+        (preg_match("/\bDaily\b/",$name)) && (time()-filemtime("{$path}/{$latest_filename}") > 25 * 3600))
+        {
+
+        // get age of file in hours
+        $age = (int) ((time()-filemtime("{$path}/{$latest_filename}")) / 3600);
+
+        // output how many hours old the backup is
+        $requirements["palante_monitoring_backup" . $name] = array(
+        'title' => "Palante Monitoring - " . $name . " backup",
+        'value' => "The latest " . $name . " backup, " . $latest_filename . ", is " . $age . " hours old!",
+        'severity' => REQUIREMENT_ERROR,
+        ); 
+
+        }
+ 
+      elseif (
+
+        // check if backup name includes Weekly and file is older than 8 days
+        (preg_match("/\bWeekly\b/",$name)) && (time()-filemtime("{$path}/{$latest_filename}") > 8 * 24 * 3600))
+        {   
+
+        // get age of file in days
+        $age = (int) ((time()-filemtime("{$path}/{$latest_filename}")) / (24 * 3600));
+
+        // output how many days old the backup is
+        $requirements["palante_monitoring_backup" . $name] = array(
+        'title' => "Palante Monitoring - " . $name . " backup",   
+        'value' => "The latest " . $name . " backup, " . $latest_filename . ", is " . $age . " days old!",
+        'severity' => REQUIREMENT_ERROR,
+        ); 
+
+        }
+
+      else
+      {
+      // if the backup ran in the desired time period
+      // then check the contents of the file
+
       // string that we are looking for in the civi database to verify it ran correctly
       $civipattern = "CREATE TABLE `civicrm_worldregion`";
 
@@ -136,61 +177,37 @@ watchdog('output date 1', "$outputdate");
       // open the file
       $zd = gzopen($filename, "r");
 
-     // output the file as string to contents
+     // output the file as string to contents, one line at a time
       while (!gzeof($zd)) {
-        $contents .= gzgets($zd, 4096);
-      }
+        $contents = gzgets($zd, 4096);
 
       // look through contents to see if the civi or drupal strings appear
       $civifind = strpos($contents, $civipattern);
       $drupalfind = strpos($contents, $drupalpattern);
 
-      // begin generating results
+      // begin generating database check results
 
-      // if backup name includes Daily and file is older than 25 hours
-      if (
-        (preg_match("/\bDaily\b/",$name)) && (time()-filemtime("{$path}/{$latest_filename}") > 25 * 3600))
-        {
-
-        // get age of file in hours
-        $age = (int) ((time()-filemtime("{$path}/{$latest_filename}")) / 3600);
-
-        // output hours old
-        $requirements["palante_monitoring_backup" . $name] = array(
+      if ( $drupalfind !== FALSE OR $civifind !== FALSE )
+ 
+      // if the desired string is found, send all is well output and break while loop
+      {
+      $requirements["palante_monitoring_backup" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",
-        'value' => "The latest " . $name . " backup, " . $latest_filename . ", is " . $age . " hours old!",
-        'severity' => REQUIREMENT_ERROR,
-        ); 
-
+        'value' => "This backup lives at " . $path . ", and the lastest backup is " . $latest_filename,
+        'severity' => REQUIREMENT_OK,
+        );
+        break;
         }
  
       elseif (
 
-        // if backup name includes Weekly and file is older than 8 days
-        (preg_match("/\bWeekly\b/",$name)) && (time()-filemtime("{$path}/{$latest_filename}") > 8 * 24 * 3600))
-        {   
-
-        // get age of file in days
-        $age = (int) ((time()-filemtime("{$path}/{$latest_filename}")) / (24 * 3600));
-
-        // output days old
-        $requirements["palante_monitoring_backup" . $name] = array(
-        'title' => "Palante Monitoring - " . $name . " backup",   
-        'value' => "The latest " . $name . " backup, " . $latest_filename . ", is " . $age . " days old!",
-        'severity' => REQUIREMENT_ERROR,
-        ); 
-
-        }
-
-      elseif (
-
-        // if backup but doesn't contain the desired string
+        // if backup doesn't contain the desired string
         (preg_match("/\bdrupal\b/",$path) && $drupalfind === FALSE) OR 
 	(preg_match("/\bcivi\b/",$path) && $civifind === FALSE) OR 
 	( $drupalfind === FALSE && $civifind === FALSE ))
 
         {
-        // output did not run properly
+        // output that the backup did not run properly
         $requirements["palante_monitoring_backup" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",
         'value' => "The latest " . $name . " backup, " . $latest_filename . ", did not run properly!",
@@ -198,18 +215,22 @@ watchdog('output date 1', "$outputdate");
         );
         }
 
-      else {
-      // else all is well output
-      $requirements["palante_monitoring_backuplocation" . $name] = array(
+      else 
+        {
+        // if the variables are neither false or not false
+        // output that the check  did not run properly
+        $requirements["palante_monitoring_backup" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",
-        'value' => "This backup lives at " . $path . ", and the lastest backup is " . $latest_filename,
-        'severity' => REQUIREMENT_OK,
-        );
-        }
-  } 
+        'value' => "There was an error checking the latest " . $name . " backup, " . $latest_filename . "!",
+        'severity' => REQUIREMENT_ERROR,
+       );
+       } 
+     }  
+   }
 
-// output date to watchdog
+// output date string to watchdog for performance testing
 $outputdate = date("Y/m/d H:i:s"). substr((string)microtime(), 1, 6);
-watchdog('output date 2', "$outputdate");
+watchdog('backup check ended', "$outputdate");
 
+  }
 }
