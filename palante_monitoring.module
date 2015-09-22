@@ -91,7 +91,11 @@ function palante_monitoring_backups(&$requirements) {
 $outputdate = date("Y/m/d H:i:s"). substr((string)microtime(), 1, 6);
 watchdog('backup check started', "$outputdate");
 
-//get backup names and locations from the drupal database
+$bmexist = module_exists(backup_migrate);
+
+if ($bmexist)
+  {
+  //get backup names and locations from the drupal database
   $result = db_query("SELECT name, location FROM backup_migrate_destinations WHERE `location` REGEXP('daily$') OR `location` REGEXP('weekly$')");
 
     // go through each name and location found
@@ -232,5 +236,6 @@ watchdog('backup check started', "$outputdate");
 $outputdate = date("Y/m/d H:i:s"). substr((string)microtime(), 1, 6);
 watchdog('backup check ended', "$outputdate");
 
+    }
   }
 }
