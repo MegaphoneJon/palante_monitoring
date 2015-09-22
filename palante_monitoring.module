@@ -109,15 +109,15 @@ if (module_exists(backup_migrate))
       $path = drupal_realpath($location);
 
       // find the most recent file in that path
-      $latest_ctime = 0;
+      $latest_mtime = 0;
       $latest_filename = '';
 
       $d = dir($path);
       while (false !== ($entry = $d->read())) {
         $filepath = "{$path}/{$entry}";
         // is a file, ends in gz, and the file creation time is more recent than others
-        if (is_file($filepath) && preg_match("/.gz$/", $filepath) && filemtime($filepath) > $latest_ctime) {
-          $latest_ctime = filectime($filepath);
+        if (is_file($filepath) && preg_match("/.gz$/", $filepath) && filemtime($filepath) > $latest_mtime) {
+          $latest_mtime = filemtime($filepath);
           $latest_filename = $entry;
         }
       }
