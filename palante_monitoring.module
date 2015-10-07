@@ -108,6 +108,20 @@ if (module_exists(backup_migrate))
       // convert relative path to real path
       $path = drupal_realpath($location);
 
+      // if path doesn't exist, or folder is empty, exit loop and throw an error.
+      $gzfile = "$path" . "/*.mysql.gz";
+      $gzfilecount = count(glob($gzfile));
+      if (
+        ($gzfilecount == 0))
+        {
+        $requirements["palante_monitoring_backup" . $name] = array(
+          'title' => "Palante Monitoring - " . $name . " backup",
+          'value' => "The backup directory " . $path . " is missing or empty!",
+          'severity' => REQUIREMENT_ERROR,
+        );
+        break;
+        }
+ 
       // find the most recent file in that path
       $latest_mtime = 0;
       $latest_filename = '';
