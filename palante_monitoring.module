@@ -87,12 +87,25 @@ function palante_monitoring_watchdog_age(&$requirements) {
 
 function palante_monitoring_backups(&$requirements) {
 
-// output date string to watchdog for performance testing
+// debug mode
+$debugMode = 0;
+
+/**
+ * Implement a debug mode for testing run time
+ */
+function palantemonitoring_watchdog($type, $message) {
+global $debugMode;
+if ($debugMode == TRUE) {
+watchdog($type, $message);
+}
+}
+
+// output date string to watchdog for performance testing if debugmode is enabled
 $outputdate = date("Y/m/d H:i:s"). substr((string)microtime(), 1, 6);
-watchdog('backup check started', "$outputdate");
+palantemonitoring_watchdog('palante_monitoring', "backup started at" . "$outputdate");
 
 // check to see if backup migrate exists first
-if (module_exists(backup_migrate))
+if (module_exists('backup_migrate'))
   {
   //get backup names and locations from the drupal database
   $result = db_query("SELECT name, location FROM backup_migrate_destinations WHERE `location` REGEXP('daily$') OR `location` REGEXP('weekly$')");
@@ -245,9 +258,9 @@ if (module_exists(backup_migrate))
      }  
    }
 
-// output date string to watchdog for performance testing
+// output date string to watchdog for performance testing if debug mode is enabled
 $outputdate = date("Y/m/d H:i:s"). substr((string)microtime(), 1, 6);
-watchdog('backup check ended', "$outputdate");
+palantemonitoring_watchdog("palante_monitoring", "backup check ended" . "$outputdate");
 
     }
   }
