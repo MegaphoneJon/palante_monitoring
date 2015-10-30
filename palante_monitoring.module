@@ -64,13 +64,13 @@ function palante_monitoring_watchdog_age(&$requirements) {
     );
   }
 
-  // if it's less than or equal to 5 days old 
-  elseif($td_days <= 5) {
+  // if it's less than 5 days old 
+  elseif($td_days < 5) {
     // post a warning.
     $requirements['palante_monitoring_oldlog'] = array(
       'title' => "Palante Monitoring - Oldest Log Check",
       'value' => "Oldest Watchdog log is only " . $td_days . " days old!",
-      'description' => "This Palante Monitoring check triggers when the oldest Watchdog logs are 5 days old or less",
+      'description' => "This Palante Monitoring check triggers when the oldest Watchdog logs are less than 5 days old",
       'severity' => REQUIREMENT_ERROR,
     );  
   }
