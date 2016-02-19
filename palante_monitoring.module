@@ -108,7 +108,7 @@ palantemonitoring_watchdog('palante_monitoring', "backup started at" . "$outputd
 if (module_exists('backup_migrate'))
   {
   //get backup names and locations from the drupal database
-  $result = db_query("SELECT name, location FROM backup_migrate_destinations WHERE `location` REGEXP('%daily%') OR `location` REGEXP('%weekly%')");
+  $result = db_query("SELECT name, location FROM backup_migrate_destinations WHERE `location` LIKE '%daily%' OR `location` LIKE '%weekly%'");
 
     // go through each name and location found
     foreach($result as $item) { 
