@@ -2,8 +2,6 @@ name = Palante monitoring
 description = Adds checks via hook_requirements so they can be picked up by the Nagios Module.
 core = 7.x
 package = "Monitoring"
-
-; Information added by Drupal.org packaging script on 2014-11-18
-version = "7.x-1.0"
-core = "7.x"
+dependencies[] = nagios
+version = "7.x-1.28"
 project = "palante_monitoring"
