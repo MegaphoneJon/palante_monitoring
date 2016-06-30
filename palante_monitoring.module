@@ -10,8 +10,24 @@ function palante_monitoring_requirements($phase) {
   $requirements = array();
   palante_monitoring_watchdog_severity($requirements);
   palante_monitoring_watchdog_age($requirements);
-  palante_monitoring_backups($requirements);
+  $requirements[] = palante_monitoring_get_backup_status();
   return $requirements;
+}
+
+/**
+ * Implements hook_cron().
+ */
+function palante_monitoring_cron() {
+  $requirements = array();
+  palante_monitoring_backups($requirements);
+  variable_set('palante_monitoring_backup_status', $requirements);
+}
+
+/**
+ * Looks up the result of the backup check cron run.
+ */
+function palante_monitoring_get_backup_status() {
+  return variable_get('palante_monitoring_backup_status');
 }
 
 /**
