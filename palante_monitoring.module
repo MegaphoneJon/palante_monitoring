@@ -85,20 +85,19 @@ function palante_monitoring_watchdog_age(&$requirements) {
   }
 }
 
-function palante_monitoring_backups(&$requirements) {
-
-// debug mode
-$debugMode = 0;
-
 /**
- * Implement a debug mode for testing run time
+ * Implement a debug mode for testing run time.
  */
 function palantemonitoring_watchdog($type, $message) {
-global $debugMode;
-if ($debugMode == TRUE) {
-watchdog($type, $message);
+  // Debug mode.
+  $debugMode = 0;
+  if ($debugMode == TRUE) {
+    watchdog($type, $message);
+  }
 }
-}
+
+
+function palante_monitoring_backups(&$requirements) {
 
 // output date string to watchdog for performance testing if debugmode is enabled
 $outputdate = date("Y/m/d H:i:s"). substr((string)microtime(), 1, 6);
