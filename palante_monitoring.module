@@ -10,7 +10,8 @@ function palante_monitoring_requirements($phase) {
   $requirements = array();
   palante_monitoring_watchdog_severity($requirements);
   palante_monitoring_watchdog_age($requirements);
-  $requirements[] = palante_monitoring_get_backup_status();
+  $backupStatus = palante_monitoring_get_backup_status();
+  $requirements = array_merge($requirements, $backupStatus);
   return $requirements;
 }
 
@@ -115,6 +116,10 @@ function palantemonitoring_watchdog($type, $message) {
 
 function palante_monitoring_backups(&$requirements) {
 
+  // Now that we're using cron, we don't have these constants defined for us.
+  $REQUIREMENT_ERROR = 2;
+  $REQUIREMENT_OK = 0;
+
   // Output date string to watchdog for performance testing if debugmode is enabled.
   $outputdate = date("Y/m/d H:i:s") . substr((string) microtime(), 1, 6);
   palantemonitoring_watchdog('palante_monitoring', "backup started at $outputdate");
@@ -145,7 +150,7 @@ function palante_monitoring_backups(&$requirements) {
       $requirements["palante_monitoring_backup" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",
         'value' => "The backup directory " . $path . " is missing or empty!",
-        'severity' => REQUIREMENT_ERROR,
+        'severity' => $REQUIREMENT_ERROR,
       );
       break;
     }
@@ -176,7 +181,7 @@ function palante_monitoring_backups(&$requirements) {
       $requirements["palante_monitoring_backup" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",
         'value' => "The latest " . $name . " backup, " . $latest_filename . ", is " . $age . " hours old!",
-        'severity' => REQUIREMENT_ERROR,
+        'severity' => $REQUIREMENT_ERROR,
       );
     }
     // Check if backup name includes Weekly and file is older than 8 days.
@@ -189,7 +194,7 @@ function palante_monitoring_backups(&$requirements) {
       $requirements["palante_monitoring_backup" . $name] = array(
         'title' => "Palante Monitoring - " . $name . " backup",
         'value' => "The latest " . $name . " backup, " . $latest_filename . ", is " . $age . " days old!",
-        'severity' => REQUIREMENT_ERROR,
+        'severity' => $REQUIREMENT_ERROR,
       );
     }
 
@@ -226,7 +231,7 @@ function palante_monitoring_backups(&$requirements) {
           $requirements["palante_monitoring_backup" . $name] = array(
             'title' => "Palante Monitoring - " . $name . " backup",
             'value' => "This backup lives at " . $path . ", and the lastest backup is " . $latest_filename,
-            'severity' => REQUIREMENT_OK,
+            'severity' => $REQUIREMENT_OK,
           );
           break;
         }
@@ -237,7 +242,7 @@ function palante_monitoring_backups(&$requirements) {
           $requirements["palante_monitoring_backup" . $name] = array(
             'title' => "Palante Monitoring - " . $name . " backup",
             'value' => "The latest " . $name . " backup, " . $latest_filename . ", did not run properly!",
-            'severity' => REQUIREMENT_ERROR,
+            'severity' => $REQUIREMENT_ERROR,
           );
         }
 
@@ -247,7 +252,7 @@ function palante_monitoring_backups(&$requirements) {
           $requirements["palante_monitoring_backup" . $name] = array(
             'title' => "Palante Monitoring - " . $name . " backup",
             'value' => "There was an error checking the latest " . $name . " backup, " . $latest_filename . "!",
-            'severity' => REQUIREMENT_ERROR,
+            'severity' => $REQUIREMENT_ERROR,
           );
         }
       }
