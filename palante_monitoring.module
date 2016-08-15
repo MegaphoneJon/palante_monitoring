@@ -129,8 +129,15 @@ function palante_monitoring_backups(&$requirements) {
     return;
   }
 
-  // Get backup names and locations from the drupal database.
-  $result = db_query("SELECT name, location FROM backup_migrate_destinations WHERE `location` LIKE '%daily%' OR `location` LIKE '%weekly%'");
+  // Get backup destination information from backup_migrate
+  $destinations = backup_migrate_get_destinations();
+  
+  // Filter for only those destinations which match the strings "daily" or "weekly"
+  $filteredDestinations = array_filter($destinations, function($obj){
+    return (strpos($obj->location, "daily")) || (strpos($obj->location, "weekly"));
+    });
+  
+  $result = $filteredDestinations;
 
   // Go through each name and location found.
   foreach ($result as $item) {
