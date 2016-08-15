@@ -3,5 +3,5 @@ description = Adds checks via hook_requirements so they can be picked up by the 
 core = 7.x
 package = "Monitoring"
 dependencies[] = nagios
-version = "7.x-1.28"
+version = "7.x-1.29"
 project = "palante_monitoring"
