@@ -61,7 +61,7 @@ function palante_monitoring_watchdog_severity(&$requirements) {
  */
 function palante_monitoring_watchdog_age(&$requirements) {
   // get the time of the oldest watchdog log entry
-  $result = db_query_range('SELECT timestamp FROM watchdog ORDER BY timestamp',0,1)->fetchField();
+  $result = db_query_range('SELECT timestamp FROM watchdog ORDER BY timestamp', 0, 1)->fetchField();
 
   // find the time since that entry
   $time = "$result";
@@ -71,7 +71,7 @@ function palante_monitoring_watchdog_age(&$requirements) {
   $td_days = (int) ($time_difference / 86400);
 
   // if it's less than a day old
-  if($td_days < 1) {
+  if ($td_days < 1) {
     // post a warning.
     $requirements['palante_monitoring_oldlog'] = array(
       'title' => "Palante Monitoring - Oldest Log Check",
@@ -81,15 +81,15 @@ function palante_monitoring_watchdog_age(&$requirements) {
     );
   }
 
-  // if it's less than 5 days old 
-  elseif($td_days < 5) {
+  // if it's less than 5 days old
+  elseif ($td_days < 5) {
     // post a warning.
     $requirements['palante_monitoring_oldlog'] = array(
       'title' => "Palante Monitoring - Oldest Log Check",
       'value' => "Oldest Watchdog log is only " . $td_days . " days old!",
       'description' => "This Palante Monitoring check triggers when the oldest Watchdog logs are less than 5 days old",
       'severity' => REQUIREMENT_ERROR,
-    );  
+    );
   }
 
   // else all is well
@@ -132,12 +132,12 @@ function palante_monitoring_backups(&$requirements) {
   // Get backup destination information from backup_migrate
   module_load_include('inc', 'backup_migrate', 'includes/destinations');
   $destinations = backup_migrate_get_destinations();
-  
+
   // Filter for only those destinations which match the strings "daily" or "weekly"
   $filteredDestinations = array_filter($destinations, function($obj){
     return (strpos($obj->location, "daily")) || (strpos($obj->location, "weekly"));
-    });
-  
+  });
+
   $result = $filteredDestinations;
 
   // Go through each name and location found.
