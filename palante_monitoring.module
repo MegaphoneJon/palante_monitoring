@@ -130,6 +130,7 @@ function palante_monitoring_backups(&$requirements) {
   }
 
   // Get backup destination information from backup_migrate
+  module_load_include('inc', 'backup_migrate', 'includes/destinations');
   $destinations = backup_migrate_get_destinations();
   
   // Filter for only those destinations which match the strings "daily" or "weekly"
