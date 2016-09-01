@@ -135,7 +135,7 @@ function palante_monitoring_backups(&$requirements) {
 
   // Filter for only those destinations which match the strings "daily" or "weekly"
   $filteredDestinations = array_filter($destinations, function($obj){
-    if(isset($obj->location) {
+    if(isset($obj->location)) {
       return (strpos($obj->location, "daily")) || (strpos($obj->location, "weekly"));
     }
   });
